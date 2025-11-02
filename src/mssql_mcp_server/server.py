@@ -101,6 +101,30 @@ def get_command():
     """Get the command to execute SQL queries."""
     return os.getenv("MSSQL_COMMAND", "execute_sql")
 
+def is_select_query(query: str) -> bool:
+    """
+    Check if a query is a SELECT statement, accounting for comments.
+    Handles both single-line (--) and multi-line (/* */) SQL comments.
+    """
+    # Remove multi-line comments /* ... */
+    query_cleaned = re.sub(r'/\*.*?\*/', '', query, flags=re.DOTALL)
+    
+    # Remove single-line comments -- ...
+    lines = query_cleaned.split('\n')
+    cleaned_lines = []
+    for line in lines:
+        # Find -- comment marker and remove everything after it
+        comment_pos = line.find('--')
+        if comment_pos != -1:
+            line = line[:comment_pos]
+        cleaned_lines.append(line)
+    
+    query_cleaned = '\n'.join(cleaned_lines)
+    
+    # Get the first non-empty word after stripping whitespace
+    first_word = query_cleaned.strip().split()[0] if query_cleaned.strip() else ""
+    return first_word.upper() == "SELECT"
+
 # Initialize server
 app = Server("mssql_mcp_server")
 
@@ -211,7 +235,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         cursor.execute(query)
         
         # Special handling for table listing
-        if query.strip().upper().startswith("SELECT") and "INFORMATION_SCHEMA.TABLES" in query.upper():
+        if is_select_query(query) and "INFORMATION_SCHEMA.TABLES" in query.upper():
             tables = cursor.fetchall()
             result = ["Tables_in_" + config["database"]]  # Header
             result.extend([table[0] for table in tables])
@@ -220,7 +244,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return [TextContent(type="text", text="\n".join(result))]
         
         # Regular SELECT queries
-        elif query.strip().upper().startswith("SELECT"):
+        elif is_select_query(query):
             columns = [desc[0] for desc in cursor.description]
             rows = cursor.fetchall()
             result = [",".join(map(str, row)) for row in rows]
