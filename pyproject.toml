@@ -19,7 +19,7 @@ classifiers = [
 ]
 dependencies = [
     "mcp>=1.0.0",
-    "pymssql>=2.2.8",
+    "mssql-python>=1.0.0",
 ]
 
 [tool.mcp]
