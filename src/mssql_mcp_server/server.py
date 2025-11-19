@@ -51,6 +51,7 @@ def get_db_config():
         "password": os.getenv("MSSQL_PASSWORD"),
         "database": os.getenv("MSSQL_DATABASE"),
         "port": os.getenv("MSSQL_PORT", "1433"),  # Default MSSQL port
+        "tds_version": None  # Will be set based on encryption settings
     }    
     # Port support (Issue #8)
     port = os.getenv("MSSQL_PORT")
@@ -78,7 +79,7 @@ def get_db_config():
             
     if(config["tds_version"] is None):
         config["tds_version"] = "7.0"  # Default TDS version if not set
-        
+
     # Windows Authentication support (Issue #7)
     use_windows_auth = os.getenv("MSSQL_WINDOWS_AUTH", "false").lower() == "true"
     
