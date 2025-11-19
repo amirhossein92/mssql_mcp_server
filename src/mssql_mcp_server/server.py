@@ -76,6 +76,9 @@ def get_db_config():
             config["tds_version"] = "7.4"  # Keep existing TDS approach
             config["server"] += ";Encrypt=yes;TrustServerCertificate=yes"  # Add explicit setting
             
+    if(config["tds_version"] is None):
+        config["tds_version"] = "7.0"  # Default TDS version if not set
+        
     # Windows Authentication support (Issue #7)
     use_windows_auth = os.getenv("MSSQL_WINDOWS_AUTH", "false").lower() == "true"
     
